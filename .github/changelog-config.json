@@ -1,0 +1,99 @@
+{
+  "categories": [
+    {
+      "title": "### Added",
+      "labels": ["feature", "enhancement", "feat"]
+    },
+    {
+      "title": "### Changed",
+      "labels": ["change", "refactor", "improvement"]
+    },
+    {
+      "title": "### Deprecated",
+      "labels": ["deprecated"]
+    },
+    {
+      "title": "### Removed",
+      "labels": ["removed"]
+    },
+    {
+      "title": "### Fixed",
+      "labels": ["fix", "bugfix", "bug"]
+    },
+    {
+      "title": "### Security",
+      "labels": ["security"]
+    }
+  ],
+  "sort": {
+    "order": "ASC",
+    "on_property": "mergedAt"
+  },
+  "template": "## What's Changed\n\n#{{CHANGELOG}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}\n",
+  "pr_template": "- #{{TITLE}} (#{{NUMBER}})",
+  "empty_template": "- No changes",
+  "transformers": [],
+  "label_extractor": [
+    {
+      "pattern": "^(feat|feature)[:\\s]",
+      "target": "$1",
+      "on_property": "title",
+      "method": "match",
+      "flags": "i"
+    },
+    {
+      "pattern": "^(fix|bugfix|bug)[:\\s]",
+      "target": "$1",
+      "on_property": "title",
+      "method": "match",
+      "flags": "i"
+    },
+    {
+      "pattern": "^(refactor|change)[:\\s]",
+      "target": "$1",
+      "on_property": "title",
+      "method": "match",
+      "flags": "i"
+    },
+    {
+      "pattern": "^(security)[:\\s]",
+      "target": "$1",
+      "on_property": "title",
+      "method": "match",
+      "flags": "i"
+    },
+    {
+      "pattern": "^(docs|documentation)[:\\s]",
+      "target": "change",
+      "on_property": "title",
+      "method": "match",
+      "flags": "i"
+    }
+  ],
+  "commit_transformers": [
+    {
+      "pattern": "^feat(\\(.+\\))?:",
+      "target": "feature"
+    },
+    {
+      "pattern": "^fix(\\(.+\\))?:",
+      "target": "fix"
+    },
+    {
+      "pattern": "^refactor(\\(.+\\))?:",
+      "target": "refactor"
+    },
+    {
+      "pattern": "^docs(\\(.+\\))?:",
+      "target": "change"
+    },
+    {
+      "pattern": "^security(\\(.+\\))?:",
+      "target": "security"
+    },
+    {
+      "pattern": "^chore(\\(.+\\))?:",
+      "target": "change"
+    }
+  ]
+}
