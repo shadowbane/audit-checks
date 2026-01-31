@@ -58,13 +58,17 @@ func (a *ComposerAuditor) Audit(ctx context.Context, app models.AppConfig) (*mod
 	cmd.Stderr = &stderr
 
 	// composer audit returns non-zero exit code when vulnerabilities are found
+	// Exit codes:
+	//   0 = No vulnerabilities found
+	//   1 = Vulnerabilities found (security advisories)
+	//   2 = Error running audit
+	//   3 = Vulnerabilities found AND abandoned packages detected
 	err := cmd.Run()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			exitCode := exitErr.ExitCode()
-			// Exit code 1 means vulnerabilities found, which is expected
-			// Exit code 0 means no vulnerabilities
-			if exitCode > 1 {
+			// Exit codes 1 and 3 mean vulnerabilities/abandoned packages found, which is expected
+			if exitCode != 1 && exitCode != 3 {
 				// Build error message from available output
 				errMsg := strings.TrimSpace(stderr.String())
 				if errMsg == "" {

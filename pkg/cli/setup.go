@@ -136,15 +136,7 @@ func addAppInteractive(cfg *config.Config) error {
 	}
 
 	// Telegram notifications
-	var telegramNotifications []string
-	if PromptYesNo("Add Telegram notifications?", false) {
-		chatID := PromptWithDefault("Telegram chat ID (comma-separated for multiple)", "")
-		if chatID != "" {
-			for _, c := range splitAndTrim(chatID) {
-				telegramNotifications = append(telegramNotifications, c)
-			}
-		}
-	}
+	telegramEnabled := PromptYesNo("Enable Telegram notifications?", false)
 
 	// Create app in database
 	gormConfig := &gorm.Config{
@@ -170,12 +162,12 @@ func addAppInteractive(cfg *config.Config) error {
 	}()
 
 	app := &models.App{
-		Name:                  name,
-		Path:                  path,
-		Type:                  appType,
-		EmailNotifications:    emailNotifications,
-		TelegramNotifications: telegramNotifications,
-		Enabled:               true,
+		Name:               name,
+		Path:               path,
+		Type:               appType,
+		EmailNotifications: emailNotifications,
+		TelegramEnabled:    telegramEnabled,
+		Enabled:            true,
 	}
 
 	if err := db.Create(app).Error; err != nil {

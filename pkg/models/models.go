@@ -70,16 +70,17 @@ func (s StringArray) Value() (driver.Value, error) {
 
 // App represents an application to audit (stored in database)
 type App struct {
-	ID                    string      `gorm:"primaryKey;size:26" json:"id"`
-	Name                  string      `gorm:"uniqueIndex;size:255;not null" json:"name"`
-	Path                  string      `gorm:"size:1024;not null" json:"path"`
-	Type                  string      `gorm:"size:50;default:auto" json:"type"` // npm, composer, auto
-	EmailNotifications    StringArray `gorm:"type:text" json:"email_notifications"`
-	TelegramNotifications StringArray `gorm:"type:text" json:"telegram_notifications"`
-	IgnoreList            StringArray `gorm:"type:text" json:"ignore_list"`
-	Enabled               bool        `gorm:"default:true" json:"enabled"`
-	CreatedAt             time.Time   `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt             time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
+	ID                 string      `gorm:"primaryKey;size:26" json:"id"`
+	Name               string      `gorm:"uniqueIndex;size:255;not null" json:"name"`
+	Path               string      `gorm:"size:1024;not null" json:"path"`
+	Type               string      `gorm:"size:50;default:auto" json:"type"` // npm, composer, auto
+	EmailNotifications StringArray `gorm:"type:text" json:"email_notifications"`
+	TelegramEnabled    bool        `gorm:"default:false" json:"telegram_enabled"`
+	TelegramTopicID    int         `gorm:"default:0" json:"telegram_topic_id"`
+	IgnoreList         StringArray `gorm:"type:text" json:"ignore_list"`
+	Enabled            bool        `gorm:"default:true" json:"enabled"`
+	CreatedAt          time.Time   `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt          time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 // BeforeCreate hook to generate ULID
@@ -97,8 +98,10 @@ func (a *App) ToAppConfig() AppConfig {
 		Path: a.Path,
 		Type: a.Type,
 		Notifications: NotificationConfig{
-			Email:    a.EmailNotifications,
-			Telegram: a.TelegramNotifications,
+			Email:           a.EmailNotifications,
+			TelegramEnabled: a.TelegramEnabled,
+			TelegramTopicID: a.TelegramTopicID,
+			AppName:         a.Name,
 		},
 		Enabled:    a.Enabled,
 		IgnoreList: a.IgnoreList,
@@ -107,8 +110,10 @@ func (a *App) ToAppConfig() AppConfig {
 
 // NotificationConfig holds notification settings for an app
 type NotificationConfig struct {
-	Email    []string `json:"email"`
-	Telegram []string `json:"telegram"`
+	Email           []string `json:"email"`
+	TelegramEnabled bool     `json:"telegram_enabled"`
+	TelegramTopicID int      `json:"telegram_topic_id"`
+	AppName         string   `json:"app_name"`
 }
 
 // AppConfig represents configuration for an app to audit (in-memory)
@@ -254,6 +259,56 @@ func (r *Report) GetSummary() Summary {
 		Moderate: r.AuditResult.ModerateCount,
 		Low:      r.AuditResult.LowCount,
 	}
+}
+
+// CombinedAppReport represents combined audit results from multiple auditors for a single app
+type CombinedAppReport struct {
+	AppName     string    `json:"app_name"`
+	AppPath     string    `json:"app_path"`
+	Reports     []*Report `json:"reports"`
+	ReportFiles []string  `json:"report_files"`
+	GeneratedAt time.Time `json:"generated_at"`
+}
+
+// NewCombinedAppReport creates a new CombinedAppReport
+func NewCombinedAppReport(appName, appPath string) *CombinedAppReport {
+	return &CombinedAppReport{
+		AppName:     appName,
+		AppPath:     appPath,
+		Reports:     make([]*Report, 0),
+		ReportFiles: make([]string, 0),
+		GeneratedAt: time.Now(),
+	}
+}
+
+// AddReport adds a report to the combined report
+func (c *CombinedAppReport) AddReport(report *Report, filePaths []string) {
+	c.Reports = append(c.Reports, report)
+	c.ReportFiles = append(c.ReportFiles, filePaths...)
+}
+
+// GetCombinedSummary returns the combined summary counts from all reports
+func (c *CombinedAppReport) GetCombinedSummary() Summary {
+	summary := Summary{}
+	for _, r := range c.Reports {
+		s := r.GetSummary()
+		summary.Total += s.Total
+		summary.Critical += s.Critical
+		summary.High += s.High
+		summary.Moderate += s.Moderate
+		summary.Low += s.Low
+	}
+	return summary
+}
+
+// HasVulnerabilities returns true if any report has vulnerabilities
+func (c *CombinedAppReport) HasVulnerabilities() bool {
+	for _, r := range c.Reports {
+		if r.AuditResult.HasVulnerabilities() {
+			return true
+		}
+	}
+	return false
 }
 
 // AuditSummary represents a summary across all audited apps

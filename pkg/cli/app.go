@@ -72,21 +72,22 @@ Add Flags:
   --path        App path (required)
   --type        App type: auto, npm, composer, or "npm,composer" for both (default: auto)
   --email       Email notifications (comma-separated)
-  --telegram    Telegram chat IDs (comma-separated)
+  --telegram    Enable Telegram notifications (bool)
   --ignore      Ignore list (comma-separated CVEs or packages)
 
 Edit Flags:
   --path        New app path
   --type        New app type: auto, npm, composer, or "npm,composer" for both
   --email       Email notifications (comma-separated, use "" to clear)
-  --telegram    Telegram chat IDs (comma-separated, use "" to clear)
+  --telegram    Enable/disable Telegram notifications (bool)
   --ignore      Ignore list (comma-separated, use "" to clear)
 
 Examples:
   audit-checks app add                            # Interactive mode
   audit-checks app add --name myapp --path /path  # With flags
+  audit-checks app add --name myapp --path /path --telegram  # Enable Telegram
   audit-checks app edit myapp --type composer     # Change app type
-  audit-checks app edit myapp --path /new/path    # Change app path
+  audit-checks app edit myapp --telegram=false    # Disable Telegram
   audit-checks app list                           # List all apps
   audit-checks app show myapp                     # Show app details
   audit-checks app remove myapp                   # Remove an app
@@ -118,7 +119,7 @@ func runAppAdd(args []string) error {
 	path := fs.String("path", "", "App path")
 	appType := fs.String("type", "auto", "App type: auto, npm, composer")
 	email := fs.String("email", "", "Email notifications (comma-separated)")
-	telegram := fs.String("telegram", "", "Telegram chat IDs (comma-separated)")
+	telegram := fs.Bool("telegram", false, "Enable Telegram notifications")
 	ignore := fs.String("ignore", "", "Ignore list (comma-separated)")
 
 	_ = fs.Parse(args)
@@ -150,12 +151,9 @@ func runAppAdd(args []string) error {
 	}
 
 	// Parse notifications
-	var emailNotifications, telegramNotifications, ignoreList []string
+	var emailNotifications, ignoreList []string
 	if *email != "" {
 		emailNotifications = splitAndTrim(*email)
-	}
-	if *telegram != "" {
-		telegramNotifications = splitAndTrim(*telegram)
 	}
 	if *ignore != "" {
 		ignoreList = splitAndTrim(*ignore)
@@ -181,13 +179,13 @@ func runAppAdd(args []string) error {
 
 	// Create app
 	app := &models.App{
-		Name:                  *name,
-		Path:                  *path,
-		Type:                  *appType,
-		EmailNotifications:    emailNotifications,
-		TelegramNotifications: telegramNotifications,
-		IgnoreList:            ignoreList,
-		Enabled:               true,
+		Name:               *name,
+		Path:               *path,
+		Type:               *appType,
+		EmailNotifications: emailNotifications,
+		TelegramEnabled:    *telegram,
+		IgnoreList:         ignoreList,
+		Enabled:            true,
 	}
 
 	if err := db.Create(app).Error; err != nil {
@@ -293,8 +291,9 @@ func runAppShow(args []string) error {
 	if len(app.EmailNotifications) > 0 {
 		fmt.Printf("Email:     %s\n", strings.Join(app.EmailNotifications, ", "))
 	}
-	if len(app.TelegramNotifications) > 0 {
-		fmt.Printf("Telegram:  %s\n", strings.Join(app.TelegramNotifications, ", "))
+	fmt.Printf("Telegram:  %t\n", app.TelegramEnabled)
+	if app.TelegramTopicID > 0 {
+		fmt.Printf("Topic ID:  %d\n", app.TelegramTopicID)
 	}
 	if len(app.IgnoreList) > 0 {
 		fmt.Printf("Ignore:    %s\n", strings.Join(app.IgnoreList, ", "))
@@ -433,7 +432,7 @@ func runAppEdit(args []string) error {
 	path := fs.String("path", "", "New app path")
 	appType := fs.String("type", "", "New app type: auto, npm, composer")
 	email := fs.String("email", "", "Email notifications (comma-separated, use \"\" to clear)")
-	telegram := fs.String("telegram", "", "Telegram chat IDs (comma-separated, use \"\" to clear)")
+	telegram := fs.Bool("telegram", false, "Enable/disable Telegram notifications")
 	ignore := fs.String("ignore", "", "Ignore list (comma-separated, use \"\" to clear)")
 
 	_ = fs.Parse(flagArgs)
@@ -490,13 +489,9 @@ func runAppEdit(args []string) error {
 		changes = append(changes, "email")
 	}
 
-	// Update telegram notifications if flag was explicitly set
+	// Update telegram enabled if flag was explicitly set
 	if isFlagSet(fs, "telegram") {
-		if *telegram == "" {
-			app.TelegramNotifications = []string{}
-		} else {
-			app.TelegramNotifications = splitAndTrim(*telegram)
-		}
+		app.TelegramEnabled = *telegram
 		changes = append(changes, "telegram")
 	}
 

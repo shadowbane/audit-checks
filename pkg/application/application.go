@@ -164,6 +164,7 @@ func (a *Application) initNotifiers() error {
 	// Telegram notifier
 	telegramNotifier, err := notifier.NewTelegramNotifier(
 		a.Config.TelegramBotToken,
+		a.Config.TelegramGroupID,
 		a.Config.TelegramEnabled,
 	)
 	if err != nil {
@@ -295,11 +296,39 @@ func (a *Application) auditApp(ctx context.Context, appConfig models.AppConfig) 
 
 	zap.S().Infof("Running %d auditor(s) for app=%s: %v", len(auditors), appConfig.Name, auditorNames(auditors))
 
-	// Run each auditor
+	// Create combined report for this app
+	combinedReport := models.NewCombinedAppReport(appConfig.Name, appConfig.Path)
+
+	// Run each auditor and collect results
 	var errs []error
 	for _, aud := range auditors {
-		if err := a.runSingleAudit(ctx, appConfig, aud); err != nil {
+		report, filePaths, err := a.runSingleAudit(ctx, appConfig, aud)
+		if err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", aud.Name(), err))
+			continue
+		}
+		if report != nil {
+			combinedReport.AddReport(report, filePaths)
+		}
+	}
+
+	// Send ONE combined notification if vulnerabilities found and not report-only mode
+	if combinedReport.HasVulnerabilities() && !a.Config.ReportOnly {
+		notifyResult, err := a.NotifierManager.NotifyAllCombined(ctx, combinedReport, appConfig.Notifications)
+		if err != nil {
+			zap.S().Errorf("Failed to send notifications: %v", err)
+		}
+
+		// Save Telegram topic ID if it was created/updated
+		if notifyResult != nil && notifyResult.TelegramTopicID > 0 {
+			if notifyResult.TelegramTopicID != appConfig.Notifications.TelegramTopicID {
+				if err := a.DB.Model(&models.App{}).Where("name = ?", appConfig.Name).
+					Update("telegram_topic_id", notifyResult.TelegramTopicID).Error; err != nil {
+					zap.S().Errorf("Failed to save Telegram topic ID: %v", err)
+				} else {
+					zap.S().Debugf("Saved Telegram topic ID=%d for app=%s", notifyResult.TelegramTopicID, appConfig.Name)
+				}
+			}
 		}
 	}
 
@@ -319,8 +348,9 @@ func auditorNames(auditors []auditor.Auditor) []string {
 	return names
 }
 
-// runSingleAudit runs a single auditor for an app
-func (a *Application) runSingleAudit(ctx context.Context, appConfig models.AppConfig, aud auditor.Auditor) error {
+// runSingleAudit runs a single auditor for an app.
+// Returns the report and generated file paths (does NOT send notifications).
+func (a *Application) runSingleAudit(ctx context.Context, appConfig models.AppConfig, aud auditor.Auditor) (*models.Report, []string, error) {
 	// Run audit with retry
 	var result *models.AuditResult
 	var err error
@@ -343,7 +373,7 @@ func (a *Application) runSingleAudit(ctx context.Context, appConfig models.AppCo
 	}
 
 	if err != nil {
-		return fmt.Errorf("all audit attempts failed: %w", err)
+		return nil, nil, fmt.Errorf("all audit attempts failed: %w", err)
 	}
 
 	// Filter by severity threshold
@@ -375,16 +405,10 @@ func (a *Application) runSingleAudit(ctx context.Context, appConfig models.AppCo
 	// Create report
 	report := models.NewReport(result, aiAnalysis)
 
-	// Generate reports
-	if err := a.ReporterManager.GenerateFormats(report, a.Config.Settings.ReportFormats); err != nil {
+	// Generate report files
+	filePaths, err := a.ReporterManager.GenerateFormats(report, a.Config.Settings.ReportFormats)
+	if err != nil {
 		zap.S().Errorf("Failed to generate reports: %v", err)
-	}
-
-	// Send notifications if vulnerabilities found and not report-only mode
-	if result.HasVulnerabilities() && !a.Config.ReportOnly {
-		if err := a.NotifierManager.NotifyAll(ctx, report, appConfig.Notifications); err != nil {
-			zap.S().Errorf("Failed to send notifications: %v", err)
-		}
 	}
 
 	// Update state
@@ -395,7 +419,7 @@ func (a *Application) runSingleAudit(ctx context.Context, appConfig models.AppCo
 	}
 	a.mu.Unlock()
 
-	return nil
+	return report, filePaths, nil
 }
 
 // generateSummary creates a summary report across all apps

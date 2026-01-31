@@ -6,10 +6,11 @@ toolchain go1.24.12
 
 require (
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/generative-ai-go v0.20.1
+	github.com/matterbridge/telegram-bot-api/v6 v6.5.0
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/shadowbane/go-logger v0.1.0-alpha
+	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.24.0
 	google.golang.org/api v0.264.0
 	gorm.io/gorm v1.31.1
@@ -44,7 +45,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect

@@ -65,29 +65,37 @@ func (m *Manager) Formats() []string {
 	return formats
 }
 
-// GenerateAll generates reports in all registered formats
-func (m *Manager) GenerateAll(report *models.Report) error {
+// GenerateAll generates reports in all registered formats.
+// Returns a slice of generated file paths.
+func (m *Manager) GenerateAll(report *models.Report) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	var filePaths []string
+
 	for format, reporter := range m.reporters {
-		if err := m.generateAndSave(report, reporter); err != nil {
+		filePath, err := m.generateAndSave(report, reporter)
+		if err != nil {
 			zap.S().Errorf("Failed to generate report format=%s app=%s error=%v",
 				format,
 				report.AppName,
 				err,
 			)
-			return err
+			return filePaths, err
 		}
+		filePaths = append(filePaths, filePath)
 	}
 
-	return nil
+	return filePaths, nil
 }
 
-// GenerateFormats generates reports only for specified formats
-func (m *Manager) GenerateFormats(report *models.Report, formats []string) error {
+// GenerateFormats generates reports only for specified formats.
+// Returns a slice of generated file paths.
+func (m *Manager) GenerateFormats(report *models.Report, formats []string) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+
+	var filePaths []string
 
 	for _, format := range formats {
 		reporter, ok := m.reporters[format]
@@ -96,45 +104,53 @@ func (m *Manager) GenerateFormats(report *models.Report, formats []string) error
 			continue
 		}
 
-		if err := m.generateAndSave(report, reporter); err != nil {
+		filePath, err := m.generateAndSave(report, reporter)
+		if err != nil {
 			zap.S().Errorf("Failed to generate report format=%s app=%s error=%v",
 				format,
 				report.AppName,
 				err,
 			)
-			return err
+			return filePaths, err
 		}
+		filePaths = append(filePaths, filePath)
 	}
 
-	return nil
+	return filePaths, nil
 }
 
-// generateAndSave generates a report and saves it to disk
-func (m *Manager) generateAndSave(report *models.Report, reporter Reporter) error {
+// generateAndSave generates a report and saves it to disk.
+// Returns the generated file path.
+func (m *Manager) generateAndSave(report *models.Report, reporter Reporter) (string, error) {
 	content, err := reporter.Generate(report)
 	if err != nil {
-		return fmt.Errorf("failed to generate %s report: %w", reporter.Format(), err)
+		return "", fmt.Errorf("failed to generate %s report: %w", reporter.Format(), err)
 	}
 
-	filename := m.buildFilename(report.AppName, reporter.Extension())
+	filename := m.buildFilename(report.AppName, report.AuditorType, reporter.Extension())
 	filePath := filepath.Join(m.outputDir, filename)
 
 	if err := os.WriteFile(filePath, content, 0644); err != nil {
-		return fmt.Errorf("failed to write report file: %w", err)
+		return "", fmt.Errorf("failed to write report file: %w", err)
 	}
 
-	zap.S().Infof("Report generated format=%s app=%s file=%s",
+	zap.S().Infof("Report generated format=%s app=%s auditor=%s file=%s",
 		reporter.Format(),
 		report.AppName,
+		report.AuditorType,
 		filePath,
 	)
 
-	return nil
+	return filePath, nil
 }
 
 // buildFilename creates a filename for the report
-func (m *Manager) buildFilename(appName, extension string) string {
+// Format: {appName}-{auditorType}-{timestamp}{extension}
+func (m *Manager) buildFilename(appName, auditorType, extension string) string {
 	timestamp := time.Now().Format("2006-01-02-150405")
+	if auditorType != "" {
+		return fmt.Sprintf("%s-%s-%s%s", appName, auditorType, timestamp, extension)
+	}
 	return fmt.Sprintf("%s-%s%s", appName, timestamp, extension)
 }
 
@@ -160,7 +176,7 @@ func (m *Manager) GenerateSummaryReport(summary *models.AuditSummary, formats []
 				continue
 			}
 
-			filename := m.buildFilename("summary", reporter.Extension())
+			filename := m.buildFilename("summary", "", reporter.Extension())
 			filePath := filepath.Join(m.outputDir, filename)
 
 			if err := os.WriteFile(filePath, content, 0644); err != nil {
