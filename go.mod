@@ -4,6 +4,8 @@ go 1.24.0
 
 toolchain go1.24.12
 
+//The github.com/google/generative-ai-go package is https://github.com/google/generative-ai-go (support ends Nov 2025). Consider migrating to googleapis/go-genai when ready.
+
 require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/generative-ai-go v0.20.1

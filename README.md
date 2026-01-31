@@ -4,6 +4,8 @@
 
 **Automated Security Auditing for Your Projects**
 
+[![GitHub Release](https://img.shields.io/github/v/release/shadowbane/audit-checks?style=for-the-badge&logo=github)](https://github.com/shadowbane/audit-checks/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/shadowbane/audit-checks/release.yml?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/shadowbane/audit-checks/actions/workflows/release.yml)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg?style=for-the-badge)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Inspired by Dependabot](https://img.shields.io/badge/Inspired%20by-Dependabot-0366d6?style=for-the-badge&logo=dependabot&logoColor=white)](https://github.com/dependabot)

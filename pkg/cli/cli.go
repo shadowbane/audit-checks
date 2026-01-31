@@ -69,7 +69,8 @@ func (c *CLI) Run() error {
 
 // PrintHelp prints the help message
 func (c *CLI) PrintHelp() {
-	fmt.Println(`audit-checks - Security audit tool for npm and composer projects
+	fmt.Printf("audit-checks version %s (built %s)\n", Version, BuildTime)
+	fmt.Println(`Security audit tool for npm and composer projects
 
 Usage:
   audit-checks [command] [flags]
