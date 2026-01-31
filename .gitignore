@@ -1,0 +1,58 @@
+# Binaries
+audit-checks
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Storage
+storage/logs/*
+storage/reports/*
+storage/*.db
+!storage/.gitkeep
+!storage/logs/.gitkeep
+!storage/reports/.gitkeep
+
+# Configuration (keep example)
+config.json
+!config.example.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Go
+vendor/
+go.work
+
+# Debug
+debug
+__debug_bin
+
+# Build artifacts
+dist/
+build/
