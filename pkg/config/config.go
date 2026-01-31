@@ -21,6 +21,7 @@ type Config struct {
 	ResendAPIKey     string
 	ResendFromEmail  string
 	TelegramBotToken string
+	TelegramGroupID  int64
 	TelegramEnabled  bool
 	GeminiAPIKey     string
 	GeminiEnabled    bool
@@ -72,6 +73,18 @@ func Get() *Config {
 	if os.Getenv("LOG_DIRECTORY") == "" {
 		_ = os.Setenv("LOG_DIRECTORY", "./storage/logs")
 	}
+	if os.Getenv("LOG_FILE_ENABLED") == "" {
+		_ = os.Setenv("LOG_FILE_ENABLED", viper.GetString("LOG_FILE_ENABLED"))
+	}
+	if os.Getenv("LOG_MAX_SIZE") == "" {
+		_ = os.Setenv("LOG_MAX_SIZE", viper.GetString("LOG_MAX_SIZE"))
+	}
+	if os.Getenv("LOG_MAX_BACKUPS") == "" {
+		_ = os.Setenv("LOG_MAX_BACKUPS", viper.GetString("LOG_MAX_BACKUPS"))
+	}
+	if os.Getenv("LOG_MAX_AGE") == "" {
+		_ = os.Setenv("LOG_MAX_AGE", viper.GetString("LOG_MAX_AGE"))
+	}
 
 	// Initialize logger
 	logger.Init(logger.LoadEnvForLogger())
@@ -92,6 +105,7 @@ func (c *Config) loadEnvVars() {
 	viper.SetDefault("DB_SQLITE_PATH", "./storage/audit.db")
 	viper.SetDefault("DB_LOG_LEVEL", "warn")
 	viper.SetDefault("TELEGRAM_ENABLED", false)
+	viper.SetDefault("TELEGRAM_GROUP_ID", 0)
 	viper.SetDefault("GEMINI_ENABLED", false)
 	viper.SetDefault("GEMINI_MODEL", "gemini-2.5-flash")
 	viper.SetDefault("SEVERITY_THRESHOLD", models.SeverityModerate)
@@ -109,6 +123,7 @@ func (c *Config) loadEnvVars() {
 	c.ResendAPIKey = viper.GetString("RESEND_API_KEY")
 	c.ResendFromEmail = viper.GetString("RESEND_FROM_EMAIL")
 	c.TelegramBotToken = viper.GetString("TELEGRAM_BOT_TOKEN")
+	c.TelegramGroupID = viper.GetInt64("TELEGRAM_GROUP_ID")
 	c.TelegramEnabled = viper.GetBool("TELEGRAM_ENABLED")
 	c.GeminiAPIKey = viper.GetString("GEMINI_API_KEY")
 	c.GeminiEnabled = viper.GetBool("GEMINI_ENABLED")
@@ -215,7 +230,7 @@ func (c *Config) IsEmailEnabled() bool {
 
 // IsTelegramEnabled returns true if Telegram notifications are configured
 func (c *Config) IsTelegramEnabled() bool {
-	return c.TelegramEnabled && c.TelegramBotToken != ""
+	return c.TelegramEnabled && c.TelegramBotToken != "" && c.TelegramGroupID != 0
 }
 
 // IsDevelopment returns true if running in development environment
