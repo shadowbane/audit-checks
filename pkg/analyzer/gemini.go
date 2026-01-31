@@ -72,7 +72,8 @@ func (g *GeminiAnalyzer) Analyze(ctx context.Context, result *models.AuditResult
 		}, nil
 	}
 
-	zap.S().Infof("Sending vulnerabilities to Gemini for analysis app=%s count=%d",
+	zap.S().Infof("[%s] Sending vulnerabilities to Gemini for analysis app=%s count=%d",
+		result.AuditorType,
 		result.AppName,
 		len(result.Vulnerabilities),
 	)
@@ -93,7 +94,7 @@ func (g *GeminiAnalyzer) Analyze(ctx context.Context, result *models.AuditResult
 		return g.fallbackAnalysis(result), nil
 	}
 
-	zap.S().Infof("Gemini analysis completed for app=%s", result.AppName)
+	zap.S().Infof("[%s] Gemini analysis completed for app=%s", result.AuditorType, result.AppName)
 	return analysis, nil
 }
 
