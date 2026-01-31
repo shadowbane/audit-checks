@@ -5,7 +5,7 @@
 **Automated Security Auditing for Your Projects**
 
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/)
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?style=for-the-badge)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg?style=for-the-badge)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Inspired by Dependabot](https://img.shields.io/badge/Inspired%20by-Dependabot-0366d6?style=for-the-badge&logo=dependabot&logoColor=white)](https://github.com/dependabot)
 
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-blue?style=flat-square)]()
@@ -385,25 +385,19 @@ summary-{YYYY-MM-DD-HHMMSS}.md
 
 ## License
 
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
-
-This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License** (CC BY-NC-SA 4.0).
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
 
 ### You are free to:
 
-- **Share** - Copy and redistribute the material in any medium or format
-- **Adapt** - Remix, transform, and build upon the material
+- **Use** - For personal, educational, research, and nonprofit purposes
+- **Modify** - Make changes and create derivative works
+- **Share** - Distribute copies of the software
 
-### Under the following terms:
+### Restrictions:
 
-- **Attribution** - You must give appropriate credit, provide a link to the license, and indicate if changes were made
-- **NonCommercial** - You may not use the material for commercial purposes
-- **ShareAlike** - If you remix, transform, or build upon the material, you must distribute your contributions under the same license
+- **NonCommercial** - You may not use this software for commercial purposes
 
-For the full license text, see [LICENSE.md](LICENSE.md) or visit [Creative Commons BY-NC-SA 4.0][cc-by-nc-sa].
-
-[cc-by-nc-sa]: https://creativecommons.org/licenses/by-nc-sa/4.0/
-[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+For the full license text, see [LICENSE.md](LICENSE.md).
 
 ---
 
