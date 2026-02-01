@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [v1.0] - 2026-02-01
+## [v1.0.0] - 2026-02-01
 
 ### Added
 - Add Laravel app scanning feature with `app scan`
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved `app list` formatting
   - Dynamic column width based on longest app name
   - Shows full paths without truncation
+
+**Full Changelog**: https://github.com/shadowbane/audit-checks/compare/v0.3.1...v1.0.0
 
 ## [v0.3.1] - 2026-01-31
 
