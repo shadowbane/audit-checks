@@ -232,9 +232,58 @@ cp .env.example .env
 
 # Edit an application
 ./audit-checks app edit myapp --path /new/path
+./audit-checks app edit myapp --name newname  # Rename an app
 
 # Remove an application
 ./audit-checks app remove myapp
+```
+
+### Scanning for Laravel Apps
+
+The `app scan` command automatically discovers Laravel applications in a directory and allows you to add them in bulk:
+
+```bash
+# Scan a directory for Laravel apps (interactive selection)
+./audit-checks app scan --path /var/www
+
+# Add all discovered apps without prompting
+./audit-checks app scan --path /var/www --all
+
+# Specify app type for scanned apps (default: auto)
+./audit-checks app scan --path /var/www --type composer
+```
+
+**How it works:**
+- Scans immediate subdirectories of the specified path (one level deep)
+- Detects Laravel apps by checking for the `artisan` file
+- Reads `APP_NAME` from each app's `.env` file (falls back to directory name)
+- Skips apps that already exist in the database (by path)
+- Prompts for a new name if a name conflict is detected
+
+**Example output:**
+```
+=== Laravel App Scanner ===
+
+Scanning /var/www for Laravel applications...
+
+Found 5 Laravel applications:
+
+  #    NAME                 PATH                                      STATUS
+--------------------------------------------------------------------------------
+  1    My Laravel App       /var/www/project-a                        OK
+  2    Another App          /var/www/project-b                        OK
+  3    project-c            /var/www/project-c                        (no APP_NAME)
+  4    legacy-app           /var/www/legacy                           (no .env)
+  5    API Service          /var/www/api                              OK
+
+Enter apps to add (comma-separated numbers, 'all', or 'q' to quit): 1,2,5
+
+Adding 3 apps...
+  + Added: My Laravel App
+  + Added: Another App
+  + Added: API Service
+
+Successfully added 3 apps.
 ```
 
 ## Environment Variables
