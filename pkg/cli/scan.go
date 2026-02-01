@@ -29,7 +29,7 @@ func runAppScan(args []string) error {
 	fs := flag.NewFlagSet("app scan", flag.ExitOnError)
 
 	scanPath := fs.String("path", "", "Directory to scan for Laravel apps (required)")
-	appType := fs.String("type", "composer", "App type for added apps: auto, npm, composer")
+	appType := fs.String("type", "auto", "App type for added apps: auto, npm, composer")
 	addAll := fs.Bool("all", false, "Add all found apps without prompting")
 
 	_ = fs.Parse(args)

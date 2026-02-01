@@ -41,6 +41,8 @@ func RunApp(args []string) error {
 		return runAppDisable(subargs)
 	case "show":
 		return runAppShow(subargs)
+	case "scan":
+		return runAppScan(subargs)
 	case "help":
 		printAppHelp()
 		return nil
@@ -66,6 +68,7 @@ Subcommands:
   remove, rm   Remove an app
   enable       Enable an app
   disable      Disable an app
+  scan         Scan a directory for Laravel apps and add them
 
 Add Flags:
   --name        App name (required)
@@ -76,16 +79,23 @@ Add Flags:
   --ignore      Ignore list (comma-separated CVEs or packages)
 
 Edit Flags:
+  --name        New app name (rename the app)
   --path        New app path
   --type        New app type: auto, npm, composer, or "npm,composer" for both
   --email       Email notifications (comma-separated, use "" to clear)
   --telegram    Enable/disable Telegram notifications (bool)
   --ignore      Ignore list (comma-separated, use "" to clear)
 
+Scan Flags:
+  --path        Directory to scan for Laravel apps (required)
+  --type        App type for added apps: auto, npm, composer (default: auto)
+  --all         Add all found apps without prompting
+
 Examples:
   audit-checks app add                            # Interactive mode
   audit-checks app add --name myapp --path /path  # With flags
   audit-checks app add --name myapp --path /path --telegram  # Enable Telegram
+  audit-checks app edit myapp --name newname      # Rename an app
   audit-checks app edit myapp --type composer     # Change app type
   audit-checks app edit myapp --telegram=false    # Disable Telegram
   audit-checks app list                           # List all apps
@@ -93,6 +103,8 @@ Examples:
   audit-checks app remove myapp                   # Remove an app
   audit-checks app enable myapp                   # Enable an app
   audit-checks app disable myapp                  # Disable an app
+  audit-checks app scan --path /var/www           # Scan and select apps to add
+  audit-checks app scan --path /var/www --all     # Add all discovered apps
 `)
 }
 
@@ -226,20 +238,25 @@ func runAppList(args []string) error {
 		return nil
 	}
 
-	fmt.Printf("\n%-20s %-10s %-10s %-40s\n", "NAME", "TYPE", "STATUS", "PATH")
-	fmt.Println(strings.Repeat("-", 85))
+	// Calculate dynamic column widths
+	maxNameLen := 4 // minimum "NAME" header length
+	for _, app := range apps {
+		if len(app.Name) > maxNameLen {
+			maxNameLen = len(app.Name)
+		}
+	}
+
+	// Print header
+	fmt.Println()
+	fmt.Printf("%-*s  %-10s  %-8s  %s\n", maxNameLen, "NAME", "TYPE", "STATUS", "PATH")
+	fmt.Println(strings.Repeat("-", maxNameLen+2+10+2+8+2+50))
 
 	for _, app := range apps {
 		status := "enabled"
 		if !app.Enabled {
 			status = "disabled"
 		}
-		// Truncate path if too long
-		path := app.Path
-		if len(path) > 40 {
-			path = "..." + path[len(path)-37:]
-		}
-		fmt.Printf("%-20s %-10s %-10s %-40s\n", app.Name, app.Type, status, path)
+		fmt.Printf("%-*s  %-10s  %-8s  %s\n", maxNameLen, app.Name, app.Type, status, app.Path)
 	}
 
 	fmt.Printf("\nTotal: %d apps\n", len(apps))
@@ -429,6 +446,7 @@ func runAppEdit(args []string) error {
 
 	fs := flag.NewFlagSet("app edit", flag.ExitOnError)
 
+	newName := fs.String("name", "", "New app name")
 	path := fs.String("path", "", "New app path")
 	appType := fs.String("type", "", "New app type: auto, npm, composer")
 	email := fs.String("email", "", "Email notifications (comma-separated, use \"\" to clear)")
@@ -460,6 +478,18 @@ func runAppEdit(args []string) error {
 
 	// Track if any changes made
 	changes := make([]string, 0)
+	oldName := app.Name
+
+	// Update name if provided
+	if *newName != "" && *newName != app.Name {
+		// Check if new name already exists
+		var existing models.App
+		if err := db.Where("name = ?", *newName).First(&existing).Error; err == nil {
+			return fmt.Errorf("app with name '%s' already exists", *newName)
+		}
+		app.Name = *newName
+		changes = append(changes, "name")
+	}
 
 	// Update path if provided
 	if *path != "" {
@@ -506,7 +536,7 @@ func runAppEdit(args []string) error {
 	}
 
 	if len(changes) == 0 {
-		fmt.Println("No changes specified. Use flags like --type, --path, --email, --telegram, --ignore")
+		fmt.Println("No changes specified. Use flags like --name, --type, --path, --email, --telegram, --ignore")
 		return nil
 	}
 
@@ -515,8 +545,12 @@ func runAppEdit(args []string) error {
 		return fmt.Errorf("failed to update app: %w", err)
 	}
 
-	zap.S().Infof("App updated: %s (changed: %s)", name, strings.Join(changes, ", "))
-	fmt.Printf("App '%s' updated successfully (changed: %s).\n", name, strings.Join(changes, ", "))
+	zap.S().Infof("App updated: %s (changed: %s)", oldName, strings.Join(changes, ", "))
+	if oldName != app.Name {
+		fmt.Printf("App '%s' renamed to '%s' and updated (changed: %s).\n", oldName, app.Name, strings.Join(changes, ", "))
+	} else {
+		fmt.Printf("App '%s' updated successfully (changed: %s).\n", app.Name, strings.Join(changes, ", "))
+	}
 
 	return nil
 }
