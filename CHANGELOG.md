@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.0.0] - 2026-02-01
 
+
+
+**Full Changelog**: https://github.com/shadowbane/audit-checks/compare/v0.3.1...v1.0.0
+
+## [v1.0.0] - 2026-02-01
+
 ### Added
 - Add Laravel app scanning feature with `app scan`
   - Scans immediate subdirectories for Laravel apps (detects `artisan` file)
