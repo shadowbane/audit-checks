@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.1] - 2026-02-02
 
-## [v1.0.0] - 2026-02-01
+### Bugfix
+- Fix timestamp, correctly show UTC time
+- Fix issue with composer auditor - `CVE` and `Affected Versions` is always `unknown` / `N/A`
 
+### Changed
+- Removed CHANGELOG.md builder from GitHub action
+- Parse CHANGELOG.md for release body
 
-
-**Full Changelog**: https://github.com/shadowbane/audit-checks/compare/v0.3.1...v1.0.0
+**Full Changelog**: https://github.com/shadowbane/audit-checks/compare/v1.0.0...v1.0.1
 
 ## [v1.0.0] - 2026-02-01
 

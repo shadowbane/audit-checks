@@ -59,9 +59,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -72,86 +69,35 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Get previous tag
-        id: previoustag
-        run: |
-          # Get all tags sorted by version, find the one before current
-          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
-          PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${CURRENT_TAG}$" | tail -1)
-
-          # If no previous tag or same as current (first release), use empty
-          if [ "$PREV_TAG" = "$CURRENT_TAG" ] || [ -z "$PREV_TAG" ]; then
-            echo "fromTag=" >> $GITHUB_OUTPUT
-            echo "No previous tag found, will generate changelog from beginning"
-          else
-            echo "fromTag=${PREV_TAG}" >> $GITHUB_OUTPUT
-            echo "Previous tag: ${PREV_TAG}"
-          fi
-
-      - name: Build Changelog
+      - name: Extract changelog for version
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          commitMode: true
-          configuration: .github/changelog-config.json
-          fromTag: ${{ steps.previoustag.outputs.fromTag }}
-          toTag: ${{ steps.version.outputs.VERSION }}
-
-      - name: Update CHANGELOG.md
         run: |
-          DATE=$(date -u '+%Y-%m-%d')
           VERSION="${{ steps.version.outputs.VERSION }}"
 
-          # Create header for this release
-          HEADER="## [${VERSION}] - ${DATE}"
-
-          # Get changelog content (remove the "## What's Changed" line since we use our own header)
-          CONTENT=$(echo "${{ steps.changelog.outputs.changelog }}" | sed '1d')
-
-          # Create new entry
-          NEW_ENTRY="${HEADER}
-          ${CONTENT}
-          "
-
-          # Check if CHANGELOG.md exists
+          # Extract section for this version from CHANGELOG.md
+          # Finds content between ## [VERSION] and the next ## [ (or EOF)
           if [ -f CHANGELOG.md ]; then
-            # Insert after the header (line 1-7 typically contain title and description)
-            # Find the first ## and insert before it
-            if grep -n "^## \[" CHANGELOG.md > /dev/null; then
-              # Get line number of first version entry
-              LINE_NUM=$(grep -n "^## \[" CHANGELOG.md | head -1 | cut -d: -f1)
-              # Insert new entry before the first version
-              head -n $((LINE_NUM - 1)) CHANGELOG.md > CHANGELOG.tmp
-              echo "${NEW_ENTRY}" >> CHANGELOG.tmp
-              tail -n +${LINE_NUM} CHANGELOG.md >> CHANGELOG.tmp
-              mv CHANGELOG.tmp CHANGELOG.md
-            else
-              # No version entries yet, append to end
-              echo "${NEW_ENTRY}" >> CHANGELOG.md
-            fi
+            CONTENT=$(awk -v ver="$VERSION" '
+              /^## \[/ {
+                if (found) exit
+                if (index($0, ver)) found=1
+                next
+              }
+              found { print }
+            ' CHANGELOG.md)
+
+            # Trim leading/trailing whitespace
+            CONTENT=$(echo "$CONTENT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
           else
-            # Create new CHANGELOG.md
-            cat > CHANGELOG.md << 'HEADER'
-          # Changelog
-
-          All notable changes to this project will be documented in this file.
-
-          The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-          and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-          HEADER
-            echo "${NEW_ENTRY}" >> CHANGELOG.md
+            CONTENT=""
           fi
 
-      - name: Commit CHANGELOG.md
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG.md for ${{ steps.version.outputs.VERSION }}" || echo "No changes to commit"
-          git push origin HEAD:main
+          # Write to output (handle multiline)
+          {
+            echo "changelog<<EOF"
+            echo "$CONTENT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
