@@ -193,7 +193,7 @@ func (r *MarkdownReporter) Generate(report *models.Report) ([]byte, error) {
 		AppName:         report.AppName,
 		AppPath:         report.AppPath,
 		AuditorType:     report.AuditorType,
-		GeneratedAt:     report.GeneratedAt.Format("2006-01-02 15:04:05 UTC"),
+		GeneratedAt:     report.GeneratedAt.UTC().Format("2006-01-02 15:04:05 UTC"),
 		Vulnerabilities: report.Vulnerabilities,
 		AIAnalysis:      report.AIAnalysis,
 	}
@@ -232,7 +232,7 @@ type summaryData struct {
 // GenerateSummary creates a summary Markdown report
 func (r *MarkdownReporter) GenerateSummary(summary *models.AuditSummary) ([]byte, error) {
 	data := summaryData{
-		GeneratedAt:          summary.GeneratedAt.Format("2006-01-02 15:04:05 UTC"),
+		GeneratedAt:          summary.GeneratedAt.UTC().Format("2006-01-02 15:04:05 UTC"),
 		TotalApps:            summary.TotalApps,
 		AppsWithVulns:        summary.AppsWithVulns,
 		TotalVulnerabilities: summary.TotalVulnerabilities,
@@ -257,7 +257,9 @@ func (r *MarkdownReporter) GenerateSummary(summary *models.AuditSummary) ([]byte
 }
 
 // defaultValue returns the default value if s is empty
-func defaultValue(s, def string) string {
+// Note: In Go templates, piped value becomes the LAST argument
+// So {{$v.Field | default "N/A"}} calls defaultValue("N/A", $v.Field)
+func defaultValue(def, s string) string {
 	if s == "" {
 		return def
 	}

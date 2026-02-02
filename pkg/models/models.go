@@ -191,11 +191,11 @@ type Vulnerability struct {
 	AuditResultID      string    `gorm:"index;size:26" json:"audit_result_id"`
 	PackageName        string    `gorm:"size:255" json:"package_name"`
 	Severity           string    `gorm:"index;size:20" json:"severity"`
-	CVEID              string    `gorm:"size:50" json:"cve_id,omitempty"`
+	CVEID              string    `gorm:"column:cve_id;size:50" json:"cve_id,omitempty"`
 	Title              string    `gorm:"size:512" json:"title"`
 	Description        string    `gorm:"type:text" json:"description,omitempty"`
 	Recommendation     string    `gorm:"type:text" json:"recommendation,omitempty"`
-	VulnerableVersions string    `gorm:"size:255" json:"vulnerable_versions,omitempty"`
+	VulnerableVersions string    `gorm:"column:vulnerable_versions;size:255" json:"vulnerable_versions,omitempty"`
 	PatchedVersions    string    `gorm:"size:255" json:"patched_versions,omitempty"`
 	URL                string    `gorm:"size:1024" json:"url,omitempty"`
 	CreatedAt          time.Time `gorm:"autoCreateTime" json:"created_at"`
