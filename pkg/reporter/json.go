@@ -61,7 +61,7 @@ func (r *JSONReporter) Generate(report *models.Report) ([]byte, error) {
 		AppName:     report.AppName,
 		AppPath:     report.AppPath,
 		AuditorType: report.AuditorType,
-		GeneratedAt: report.GeneratedAt.Format("2006-01-02T15:04:05Z07:00"),
+		GeneratedAt: report.GeneratedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		Summary: jsonSummary{
 			Total:    report.AuditResult.TotalVulnerabilities,
 			Critical: report.AuditResult.CriticalCount,
@@ -109,7 +109,7 @@ type jsonAppSummary struct {
 // GenerateSummary creates a summary JSON report
 func (r *JSONReporter) GenerateSummary(summary *models.AuditSummary) ([]byte, error) {
 	output := jsonSummaryReport{
-		GeneratedAt:          summary.GeneratedAt.Format("2006-01-02T15:04:05Z07:00"),
+		GeneratedAt:          summary.GeneratedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		TotalApps:            summary.TotalApps,
 		AppsWithVulns:        summary.AppsWithVulns,
 		TotalVulnerabilities: summary.TotalVulnerabilities,

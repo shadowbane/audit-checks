@@ -147,7 +147,7 @@ func (m *Manager) generateAndSave(report *models.Report, reporter Reporter) (str
 // buildFilename creates a filename for the report
 // Format: {appName}-{auditorType}-{timestamp}{extension}
 func (m *Manager) buildFilename(appName, auditorType, extension string) string {
-	timestamp := time.Now().Format("2006-01-02-150405")
+	timestamp := time.Now().UTC().Format("2006-01-02-150405")
 	if auditorType != "" {
 		return fmt.Sprintf("%s-%s-%s%s", appName, auditorType, timestamp, extension)
 	}
