@@ -120,8 +120,8 @@ func (a *ComposerAuditor) Audit(ctx context.Context, app models.AppConfig) (*mod
 
 // composerAuditOutput represents the composer audit JSON output structure
 type composerAuditOutput struct {
-	Advisories map[string][]composerAdvisory `json:"advisories"`
-	Abandoned  json.RawMessage               `json:"abandoned,omitempty"` // Can be [] or {} depending on content
+	Advisories json.RawMessage `json:"advisories,omitempty"` // Can be [] or {} depending on content
+	Abandoned  json.RawMessage `json:"abandoned,omitempty"`  // Can be [] or {} depending on content
 }
 
 type composerAdvisory struct {
@@ -167,8 +167,23 @@ func (a *ComposerAuditor) parseOutput(output string, app models.AppConfig) (*mod
 		Vulnerabilities: make([]models.Vulnerability, 0),
 	}
 
+	// Parse advisories - can be [] (empty array) or map[string][]advisory
+	var advisoriesMap map[string][]composerAdvisory
+	if len(auditOutput.Advisories) > 0 {
+		// Try parsing as map first
+		if err := json.Unmarshal(auditOutput.Advisories, &advisoriesMap); err != nil {
+			// If it fails, it might be an empty array - that's ok
+			var emptyArr []interface{}
+			if json.Unmarshal(auditOutput.Advisories, &emptyArr) != nil {
+				return nil, fmt.Errorf("failed to parse advisories: %w", err)
+			}
+			// Empty array means no advisories
+			advisoriesMap = make(map[string][]composerAdvisory)
+		}
+	}
+
 	// Process advisories
-	for pkgName, advisories := range auditOutput.Advisories {
+	for pkgName, advisories := range advisoriesMap {
 		for _, advisory := range advisories {
 			severity := determineSeverity(advisory)
 			recommendation := buildComposerRecommendation(pkgName, advisory)
