@@ -44,7 +44,7 @@ jobs:
           CGO_ENABLED: 0
         run: |
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
-          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildTime=${BUILD_TIME}" \
+          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildTime=${BUILD_TIME} -X main.BuildOS=${{ matrix.goos }} -X main.BuildArch=${{ matrix.goarch }}" \
             -o audit-checks-${{ matrix.suffix }} .
 
       - name: Upload artifact

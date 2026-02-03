@@ -11,11 +11,13 @@ import (
 var (
 	Version   = "dev"
 	BuildTime = "unknown"
+	BuildOS   = "unknown"
+	BuildArch = "unknown"
 )
 
 func main() {
 	// Set version information in CLI package
-	cli.SetVersion(Version, BuildTime)
+	cli.SetVersion(Version, BuildTime, BuildOS, BuildArch)
 
 	// Create CLI with arguments (skip the program name)
 	c := cli.New(os.Args[1:])
