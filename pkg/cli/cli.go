@@ -69,7 +69,9 @@ func (c *CLI) Run() error {
 
 // PrintHelp prints the help message
 func (c *CLI) PrintHelp() {
-	fmt.Printf("audit-checks version %s (built %s)\n", Version, BuildTime)
+	//fmt.Printf("audit-checks version %s (built %s)\n", Version, BuildTime)
+	c.PrintVersion()
+	fmt.Println("")
 	fmt.Println(`Security audit tool for npm and composer projects
 
 Usage:
@@ -129,19 +131,25 @@ Environment Variables:
 
 // PrintVersion prints version information
 func (c *CLI) PrintVersion() {
-	fmt.Printf("audit-checks version %s (built %s)\n", Version, BuildTime)
+	fmt.Printf("audit-checks version %s\n", Version)
+	fmt.Printf("  Built:    %s\n", BuildTime)
+	fmt.Printf("  OS/Arch:  %s/%s\n", BuildOS, BuildArch)
 }
 
 // Version and build information (set by main.go)
 var (
 	Version   = "dev"
 	BuildTime = "unknown"
+	BuildOS   = "unknown"
+	BuildArch = "unknown"
 )
 
 // SetVersion sets the version information
-func SetVersion(version, buildTime string) {
+func SetVersion(version, buildTime, buildOS, buildArch string) {
 	Version = version
 	BuildTime = buildTime
+	BuildOS = buildOS
+	BuildArch = buildArch
 }
 
 // Helper functions for interactive prompts
