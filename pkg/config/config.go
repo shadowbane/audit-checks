@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,7 +89,6 @@ func Get() *Config {
 
 	// Initialize logger
 	envForLogger := logger.LoadEnvForLogger()
-	fmt.Printf("AppEnv: %+v\n", envForLogger)
 	logger.Init(envForLogger)
 
 	// Set defaults for settings
