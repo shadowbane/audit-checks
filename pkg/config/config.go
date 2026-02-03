@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -66,12 +67,13 @@ func Get() *Config {
 	// Load environment variables
 	cfg.loadEnvVars()
 
-	// Set defaults for log level and directory if not set
+	// Set environment variables for logger package (which reads from os.Getenv)
+	// Only set if not already in OS env (e.g., from -v flag), otherwise use Viper value
 	if os.Getenv("LOG_LEVEL") == "" {
 		_ = os.Setenv("LOG_LEVEL", cfg.getDefaultLogLevel())
 	}
 	if os.Getenv("LOG_DIRECTORY") == "" {
-		_ = os.Setenv("LOG_DIRECTORY", "./storage/logs")
+		_ = os.Setenv("LOG_DIRECTORY", cfg.LogDirectory)
 	}
 	if os.Getenv("LOG_FILE_ENABLED") == "" {
 		_ = os.Setenv("LOG_FILE_ENABLED", viper.GetString("LOG_FILE_ENABLED"))
@@ -87,7 +89,9 @@ func Get() *Config {
 	}
 
 	// Initialize logger
-	logger.Init(logger.LoadEnvForLogger())
+	envForLogger := logger.LoadEnvForLogger()
+	fmt.Printf("AppEnv: %+v\n", envForLogger)
+	logger.Init(envForLogger)
 
 	// Set defaults for settings
 	cfg.setDefaults()
@@ -244,7 +248,7 @@ func (c *Config) getDefaultLogLevel() string {
 	case "local", "development", "dev", "debug", "testing":
 		return "debug"
 	default:
-		return "info"
+		return c.LogLevel
 	}
 }
 
